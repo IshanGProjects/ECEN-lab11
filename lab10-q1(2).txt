@@ -93,16 +93,15 @@ clock_divider clk_div(
 );
 
 // Millisecond timer logic
-reg [3:0] ms, cs, ds, ts;
+reg [3:0] ms, ds, hs, ts;
 
 always @(posedge clk_1kHz) begin
     if (ms == 4'b1001) begin
         ms <= 0;
-        if (cs == 4'b1001) begin
-            cs <= 0;
-            if (ds == 4'b1001) begin
-                ds <=
-                ds <= 0;
+        if (ds == 4'b1001) begin
+            ds <= 0;
+            if (hs == 4'b1001) begin
+                hs <= 0;
                 if (ts == 4'b1001) begin
                     ts <= 0;
                 end
@@ -111,11 +110,11 @@ always @(posedge clk_1kHz) begin
                 end
             end
             else begin
-                ds <= ds + 1;
+                hs <= hs + 1;
             end
         end
         else begin
-            cs <= cs + 1;
+            ds <= ds + 1;
         end
     end
     else begin
@@ -123,10 +122,10 @@ always @(posedge clk_1kHz) begin
     end
 end
 
-wire [7:0] seg_ms, seg_cs, seg_ds, seg_ts;
+wire [7:0] seg_ms, seg_ds, seg_hs, seg_ts;
 hexEncode d0(ms, 1'b0, seg_ms); // No decimal point for ms
-hexEncode d1(cs, 1'b1, seg_cs); // Decimal point for cs
-hexEncode d2(ds, 1'b0, seg_ds); // No decimal point for ds
+hexEncode d1(ds, 1'b1, seg_ds); // Decimal point for ds
+hexEncode d2(hs, 1'b0, seg_hs); // No decimal point for hs
 hexEncode d3(ts, 1'b0, seg_ts); // No decimal point for ts
 
 // Multiplex the displays
@@ -136,8 +135,8 @@ always @(posedge clk_10kHz) begin
     display_sel <= display_sel + 1;
 end
 
-assign D0_seg = (display_sel == 2'b00) ? seg_ms : (display_sel == 2'b01) ? seg_cs : 8'b11111111;
-assign D1_seg = (display_sel == 2'b10) ? seg_ds : (display_sel == 2'b11) ? seg_ts : 8'b11111111;
+assign D0_seg = (display_sel == 2'b00) ? seg_ms : (display_sel == 2'b01) ? seg_ds : 8'b11111111;
+assign D1_seg = (display_sel == 2'b10) ? seg_hs : (display_sel == 2'b11) ? seg_ts : 8'b11111111;
 
 assign D0_a = (display_sel == 2'b00) ? 4'b1110 : (display_sel == 2'b01) ? 4'b1101 : 4'b1111;
 assign D1_a = (display_sel == 2'b10) ? 4'b1011 : (display_sel == 2'b11) ? 4'b0111 : 4'b1111;
