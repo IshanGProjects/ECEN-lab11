@@ -93,14 +93,14 @@ clock_divider clk_div(
 );
 
 // Millisecond timer logic
-reg [4:0] ms, cs, ds, ss;
+reg [3:0] ms, cs, ds, ss;
 
 always @(posedge clk_1kHz) begin
-    if (ms == 5'b10000) begin
+    if (ms == 4'b1001) begin
         ms <= 0;
-        if (cs == 5'b10000) begin
+        if (cs == 4'b1001) begin
             cs <= 0;
-            if (ds == 5'b10000) begin
+            if (ds == 4'b1001) begin
                 ds <= 0;
                 if (ss == 4'b1001) begin
                     ss <= 0;
@@ -123,10 +123,10 @@ always @(posedge clk_1kHz) begin
 end
 
 wire [7:0] seg_ms, seg_cs, seg_ds, seg_ss;
-hexEncode d0(ms[3:0], 1'b0, seg_ms); // No decimal point for ms
-hexEncode d1(cs[3:0], 1'b0, seg_cs); // No decimal point for cs
-hexEncode d2(ds[3:0], 1'b1, seg_ds); // Decimal point for ds
-hexEncode d3(ss[3:0], 1'b0, seg_ss); // No decimal point for ss
+hexEncode d0(ms, 1'b0, seg_ms); // No decimal point for ms
+hexEncode d1(cs, 1'b0, seg_cs); // No decimal point for cs
+hexEncode d2(ds, 1'b1, seg_ds); // Decimal point for ds
+hexEncode d3(ss, 1'b0, seg_ss); // No decimal point for ss
 
 // Multiplex the displays
 reg [2:0] display_sel;
