@@ -42,9 +42,10 @@ module hexEncode(
     assign hex[4] = (~A & ~B & ~C & D) | (~A & ~B & C & D) | (~A & B & ~C & ~D) | (~A & B & ~C & D) | (~A & B & C & D) | (A & ~B & ~C & D);
     assign hex[3] = (~A & ~B & ~C & D) | (~A & B & ~C & ~D) | (~A & B & C & D) | (A & ~B & C & ~D) | (A & B & C & D);
     assign hex[2] = (~A & ~B & C & ~D) | (A & B & ~C & ~D) | (A & B & C & ~D) | (A & B & C & D);
-    assign hex[1] = (~A & B & ~C & D) |  (~A & B & C & ~D) | (A & ~B & C & D) |  (A & B & (A & B & ~C & ~D) | (A & B & C & ~D) | (A & B & C & D);
+    assign hex[1] = (~A & B & ~C & D) | (~A & B & C & ~D) | (A & ~B & C & D) | (A & B & ~C & ~D) | (A & B & C & ~D) | (A & B & C & D);
     assign hex[0] = (~A & B & ~C & ~D) | (A & ~B & C & D) | (A & B & ~C & D) | (~A&~B&~C&D);
 endmodule
+
 
 module top(
   input mclk,
