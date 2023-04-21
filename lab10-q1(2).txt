@@ -138,8 +138,9 @@ end
 assign D0_seg = (display_sel == 2'b00) ? seg_ms : (display_sel == 2'b01) ? seg_ds : 8'b11111111;
 assign D1_seg = (display_sel == 2'b10) ? seg_hs : (display_sel == 2'b11) ? seg_ts : 8'b11111111;
 
-assign D0_a = (display_sel == 2'b00) ? 4'b1110 : (display_sel == 2'b01) ? 4'b1101 : 4'b1111;
-assign D1_a = (display_sel == 2'b10) ? 4'b1011 : (display_sel == 2'b11) ? 4'b0111 : 4'b1111;
+assign D0_a = (display_sel == 2'b00) ? 4'b0111 : (display_sel == 2'b01) ? 4'b1011 : 4'b1111;
+assign D1_a = (display_sel == 2'b10) ? 4'b1101 : (display_sel == 2'b11) ? 4'b1110 : 4'b1111;
 
 endmodule
+
 
