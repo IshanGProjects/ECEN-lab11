@@ -178,4 +178,7 @@ end
 
 // Swap the position of the digits in the display
 assign D1_seg = (display_sel == 3'b000) ? seg_ss : (display_sel == 3'b001) ? seg_ds : (display_sel == 3'b010) ? seg_cs : (display_sel == 3'b011) ? seg_ms : 8'b11111111;
-assign D1_a = (display_sel == 3'b000) ? 4'b0111 : (display_sel == 3'b001) ? 4'b1011 : (display_sel == 3'b010) ? 4
+assign D1_a = (display_sel == 3'b000) ? 4'b0111 : (display_sel == 3'b001) ? 4'b1011 : (display_sel == 3'b010) ? 4'b1101 : (display_sel == 3'b011) ? 4'b1110 : 4'b1111;
+
+endmodule
+
