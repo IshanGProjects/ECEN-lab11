@@ -69,8 +69,8 @@ endmodule
 
 module top(
   input mclk,
-  input BTN0,
-  input BTN1,
+  input BTN0, // Add input for reset button
+  input BTN1, // Add input for start/stop button
   output [7:0] D1_seg,
   output [3:0] D1_a
 );
@@ -86,25 +86,10 @@ clock_divider clk_div(
 
 // Millisecond timer logic
 reg [3:0] ms, cs, ds, ss;
-reg timer_running = 0;
-reg btn0_state, btn1_state;
+reg timer_running = 0; // Add a register to store the timer state
 
-always @(posedge mclk) begin
-  btn0_state <= BTN0;
-  btn1_state <= BTN1;
-
-  if (btn0_state == 1'b0) begin
-    ms <= 0;
-    cs <= 0;
-    ds <= 0;
-    ss <= 0;
-  end
-
-  if (btn1_state == 1'b0) begin
-    timer_running <= ~timer_running;
-  end
-
-  if (timer_running) begin
+always @(posedge clk_1kHz) begin
+  if (timer_running) begin // Modify the timer logic to run only if timer_running is true
     if (ms == 4'b1001) begin
       ms <= 0;
       if (cs == 4'b1001) begin
@@ -123,38 +108,55 @@ always @(posedge mclk) begin
         end
       end
       else begin
-        cs <= cs + 1;
+          cs <= cs + 1;
+        end
       end
-    end
     else begin
       ms <= ms + 1;
     end
   end
 end
 
-// Display multiplexing logic
-reg [1:0] digit_sel = 2'b00;
+// Button logic
+reg BTN0_sync1, BTN0_sync2, BTN0_edge;
+reg BTN1_sync1, BTN1_sync2, BTN1_edge;
 
-always @(posedge clk_1kHz) begin
-  digit_sel <= digit_sel + 1;
-  case (digit_sel)
-    2'b00: begin
-      D1_seg <= {1'b0, 1'b0, 1'b0, ss[0]};
-      D1_a <= 4'b1110;
-    end
-    2'b01: begin
-      D1_seg <= {1'b0, 1'b0, 1'b1, ss[1:0]};
-      D1_a <= 4'b1101;
-    end
-    2'b10: begin
-      D1_seg <= {1'b0, 1'b1, 1'b0, ds[0]};
-      D1_a <= 4'b1011;
-    end
-    2'b11: begin
-      D1_seg <= {1'b0, 1'b1, 1'b1, ds[1:0]};
-      D1_a <= 4'b0111;
-    end
-  endcase
+always @(posedge mclk) begin
+  // Synchronize BTN0 and detect its rising edge
+  BTN0_sync1 <= BTN0;
+  BTN0_sync2 <= BTN0_sync1;
+  BTN0_edge <= BTN0_sync2 & ~BTN0_sync1;
+
+  // Synchronize BTN1 and detect its rising edge
+  BTN1_sync1 <= BTN1;
+  BTN1_sync2 <= BTN1_sync1;
+  BTN1_edge <= ~BTN1_sync2 & BTN1_sync1;
+  
+  if (BTN0_edge) begin
+    ms <= 0;
+    cs <= 0;
+    ds <= 0;
+    ss <= 0;
+  end
+  if (BTN1_edge) begin
+    timer_running <= ~timer_running;
+  end
 end
+
+// Encode and display logic (same as before)
+wire [7:0] seg_ms, seg_cs, seg_ds, seg_ss;
+hexEncode d0(ms, 1'b0, seg_ms);
+hexEncode d1(cs, 1'b0, seg_cs);
+hexEncode d2(ds, 1'b0, seg_ds);
+hexEncode d3(ss, 1'b1, seg_ss);
+
+reg [2:0] display_sel;
+
+always @(posedge clk_10kHz) begin
+display_sel <= display_sel + 1;
+end
+
+assign D1_seg = (display_sel == 3'b000) ? seg_ss : (display_sel == 3'b001) ? seg_ds : (display_sel == 3'b010) ? seg_cs :seg_ms;
+assign D1_a = (display_sel == 3'b000) ? 4'b1110 : (display_sel == 3'b001) ? 4'b1101 : (display_sel == 3'b010) ? 4'b1011 : 4'b0111;
 
 endmodule
