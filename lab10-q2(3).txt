@@ -79,6 +79,8 @@ module debounce(
 reg [15:0] counter;
 reg btn_state;
 
+
+
 always @(posedge clk) begin
     if (btn_in == btn_state) begin
         counter <= 0;
@@ -116,13 +118,19 @@ clock_divider clk_div(
 );
 
 // Add logic for reset and start/stop
+// Add logic for reset and start/stop
 reg reset = 0;
+reg reset_next = 0; // Add a new register for the next reset value
 reg run = 0;
 
 always @(posedge mclk) begin
-    if (btn0_debounced) reset <= 1;
-    else if (btn1_debounced) run <= ~run;
-    else reset <= 0;
+    if (btn0_debounced) reset_next <= 1;
+    else reset_next <= 0;
+end
+
+always @(posedge clk_1kHz) begin
+    reset <= reset_next;
+    if (btn1_debounced) run <= ~run;
 end
 
 // Millisecond timer logic
