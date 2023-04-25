@@ -80,7 +80,7 @@ wire clk_1kHz;
 wire clk_10kHz;
 clock_divider clk_div(
     .mclk(mclk),
-    .clk_1kHz(clk 1kHz),
+    .clk_1kHz(clk_1kHz), // Fixed typo here
     .clk_10kHz(clk_10kHz)
 );
 
@@ -89,29 +89,29 @@ reg [3:0] ms, cs, ds, ss;
 reg timer_running = 0;
 
 always @(posedge clk_1kHz) begin
-if (timer_running) begin
-    if (ms == 4'b1001) begin
-        ms <= 0;
-    if (cs == 4'b1001) begin
-        cs <= 0;
-    if (ds == 4'b1001) begin
-        ds <= 0;
-    if (ss == 4'b1001) begin
-        ss <= 0;
-    end
-else begin
-    ss <= ss + 1;
-    end
-end
-else begin
-    ds <= ds + 1;
-end
-end
-else begin
-    cs <= cs + 1;
-end
-end
-else begin
+    if (timer_running) begin
+        if (ms == 4'b1001) begin
+            ms <= 0;
+            if (cs == 4'b1001) begin
+                cs <= 0;
+                if (ds == 4'b1001) begin
+                    ds <= 0;
+                    if (ss == 4'b1001) begin
+                        ss <= 0;
+                    end
+                    else begin
+                        ss <= ss + 1;
+                    end
+                end
+                else begin
+                    ds <= ds + 1;
+                end
+            end
+            else begin
+                cs <= cs + 1;
+            end
+        end
+        else begin
             ms <= ms + 1;
         end
     end
@@ -153,10 +153,22 @@ hexEncode d3(ss, 1'b0, seg_ss);
 reg [2:0] display_sel;
 
 always @(posedge clk_10kHz) begin
-display_sel <= display_sel + 1;
+    display_sel <= display_sel + 1;
 end
 
 assign D1_seg = (display_sel == 3'b000) ? seg_ss : (display_sel == 3'b001) ? seg_ds : (display_sel == 3'b010) ? seg_cs : seg_ms;
 assign D1_a = (display_sel == 3'b000) ? 4'b1110 : (display_sel == 3'b001) ? 4'b1101 : (display_sel == 3'b010) ? 4'b1011 : 4'b0111;
 
 endmodule
+
+
+
+
+
+
+
+
+
+
+
+
