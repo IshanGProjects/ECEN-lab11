@@ -1,3 +1,23 @@
+`timescale 1ns / 1ps
+//////////////////////////////////////////////////////////////////////////////////
+// Company: 
+// Engineer: 
+// 
+// Create Date: 04/20/2023 02:04:47 PM
+// Design Name: 
+// Module Name: lab11-q1
+// Project Name: 
+// Target Devices: 
+// Tool Versions: 
+// Description: 
+// 
+// Dependencies: 
+// 
+// Revision:
+// Revision 0.01 - File Created
+// Additional Comments:
+// 
+//////////////////////////////////////////////////////////////////////////////////
 module clock_divider (
     input mclk,
     output reg clk_1kHz,
@@ -5,29 +25,24 @@ module clock_divider (
 );
 
 // Counter to divide the clock
-reg [15:0] counter;
+reg [23:0] counter;
 
 // Divide clock and set output
 always @(posedge mclk) begin
-    if (counter == (50_000_000 / 1_000) - 1) begin
+    if (counter == 50_000_000 / 1_000 - 1) begin
         counter <= 0;
         clk_1kHz <= ~clk_1kHz; // Toggle 1kHz output
     end
     else begin
         counter <= counter + 1;
     end
-end
 
-// Generate 10kHz clock
-always @(posedge mclk) begin
-    if (counter == (50_000_000 / 10_000) - 1) begin
+    if (counter == 50_000_000 / 10_000 - 1) begin
         clk_10kHz <= ~clk_10kHz; // Toggle 10kHz output
     end
 end
 
 endmodule
-
-
 
 module hexEncode(
     input [3:0] bin,
@@ -47,84 +62,71 @@ module hexEncode(
     assign hex[4] = (~A & ~B & ~C & D) | (~A & ~B & C & D) | (~A & B & ~C & ~D) | (~A & B & ~C & D) | (~A & B & C & D) | (A & ~B & ~C & D);
     assign hex[3] = (~A & ~B & ~C & D) | (~A & B & ~C & ~D) | (~A & B & C & D) | (A & ~B & C & ~D) | (A & B & C & D);
     assign hex[2] = (~A & ~B & C & ~D) | (A & B & ~C & ~D) | (A & B & C & ~D) | (A & B & C & D);
-    assign hex[1] = (~A & B & ~C & D) |  (~A & B & C & ~D) | (A & ~B & C & D) |  (A & B & ~C & ~D) | (A & B & C & ~D) |  (A & B & C & D);
+    assign hex[1] = (~A & B & ~C & D) | (~A & B & C & ~D) | (A & ~B & C & D) | (A & B & ~C & ~D) | (A & B & C & ~D) | (A & B & C & D);
     assign hex[0] = (~A & B & ~C & ~D) | (A & ~B & C & D) | (A & B & ~C & D) | (~A&~B&~C&D);
 endmodule
 
-module display_4_hex(
-    input [15:0] sw,
-    input clk_10kHz,
-    output [7:0] D0_seg, D1_seg,
-    output [3:0] D0_a, D1_a
-);
-
-
-
-
-
 
 module top(
-    input mclk,
-    output [7:0] D0_seg, D1_seg,
-    output [3:0] D0_a, D1_a
+  input mclk,
+  output [7:0] D1_seg,
+  output [3:0] D1_a
 );
 
 // Instantiate clock_divider module
 wire clk_1kHz;
 wire clk_10kHz;
 clock_divider clk_div(
-    .mclk(mclk),
-    .clk_1kHz(clk_1kHz),
-    .clk_10kHz(clk_10kHz)
+  .mclk(mclk),
+  .clk_1kHz(clk_1kHz),
+  .clk_10kHz(clk_10kHz)
 );
 
 // Millisecond timer logic
-reg [3:0] ms, cs, ds, ts;
+reg [3:0] ms, cs, ds, ss;
 
 always @(posedge clk_1kHz) begin
-    if (ms == 4'b1001) begin
-        ms <= 0;
-        if (cs == 4'b1001) begin
-            cs <= 0;
-            if (ds == 4'b1001) begin
-                ds <= 0;
-                if (ts == 4'b1001) begin
-                    ts <= 0;
-                end
-                else begin
-                    ts <= ts + 1;
-                end
-            end
-            else begin
-                ds <= ds + 1;
-            end
-        end
-        else begin
-            cs <= cs + 1;
-        end
+if (ms == 4'b1001) begin
+  ms <= 0;
+  if (cs == 4'b1001) begin
+    cs <= 0;
+    if (ds == 4'b1001) begin
+      ds <= 0;
+      if (ss == 4'b1001) begin
+        ss <= 0;
+      end
+      else begin
+        ss <= ss + 1;
+      end
     end
     else begin
-        ms <= ms + 1;
+      ds <= ds + 1;
     end
+  end
+  else begin
+      cs <= cs + 1;
+    end
+  end
+    else begin
+    ms <= ms + 1;
+  end
 end
 
-wire [7:0] seg_ms, seg_cs, seg_ds, seg_ts;
+wire [7:0] seg_ms, seg_cs, seg_ds, seg_ss;
 hexEncode d0(ms, 1'b0, seg_ms); // No decimal point for ms
-hexEncode d1(cs, 1'b1, seg_cs); // Decimal point for cs
-hexEncode d2(ds, 1'b0, seg_ds); // No decimal point for ds
-hexEncode d3(ts, 1'b0, seg_ts); // No decimal point for ts
+hexEncode d1(cs, 1'b0, seg_cs); // No decimal point for cs
+hexEncode d2(ds, 1'b0, seg_ds); // No decimal point for ss
+hexEncode d3(ss, 1'b1, seg_ss); // Decimal point for ds
 
 // Multiplex the displays
-reg [1:0] display_sel;
+reg [2:0] display_sel;
 
 always @(posedge clk_10kHz) begin
-    display_sel <= display_sel + 1;
+display_sel <= display_sel + 1;
 end
 
-assign D0_seg = (display_sel == 2'b00) ? seg_ms : (display_sel == 2'b01) ? seg_cs : 8'b11111111;
-assign D1_seg = (display_sel == 2'b10) ? seg_ds : (display_sel == 2'b11) ? seg_ts : 8'b11111111;
-
-assign D0_a = (display_sel == 2'b00) ? 4'b1110 : (display_sel == 2'b01) ? 4'b1101 : 4'b1111;
-assign D1_a = (display_sel == 2'b10) ? 4'b1011 : (display_sel == 2'b11) ? 4'b0111 : 4'b1111;
+// Swap the position of the digits in the display
+assign D1_seg = (display_sel == 3'b000) ? seg_ss : (display_sel == 3'b001) ? seg_ds : (display_sel == 3'b010) ? seg_cs : (display_sel == 3'b011) ? seg_ms : 8'b11111111;
+assign D1_a = (display_sel == 3'b000) ? 4'b0111 : (display_sel == 3'b001) ? 4'b1011 : (display_sel == 3'b010) ? 4'b1101 : (display_sel == 3'b011) ? 4'b1110 : 4'b1111;
 
 endmodule
