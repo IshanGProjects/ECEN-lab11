@@ -69,8 +69,6 @@ endmodule
 
 module top(
   input mclk,
-  input BTN0, // Add input for reset button
-  input BTN1, // Add input for start/stop button
   output [7:0] D1_seg,
   output [3:0] D1_a
 );
@@ -86,63 +84,48 @@ clock_divider clk_div(
 
 // Millisecond timer logic
 reg [3:0] ms, cs, ds, ss;
-reg timer_running = 0; // Add a register to store the timer state
 
 always @(posedge clk_1kHz) begin
-  if (timer_running) begin // Modify the timer logic to run only if timer_running is true
-    if (ms == 4'b1001) begin
-      ms <= 0;
-      if (cs == 4'b1001) begin
-        cs <= 0;
-        if (ds == 4'b1001) begin
-          ds <= 0;
-          if (ss == 4'b1001) begin
-            ss <= 0;
-          end
-          else begin
-            ss <= ss + 1;
-          end
-        end
-        else begin
-          ds <= ds + 1;
-        end
+if (ms == 4'b1001) begin
+  ms <= 0;
+  if (cs == 4'b1001) begin
+    cs <= 0;
+    if (ds == 4'b1001) begin
+      ds <= 0;
+      if (ss == 4'b1001) begin
+        ss <= 0;
       end
       else begin
-          cs <= cs + 1;
-        end
+        ss <= ss + 1;
       end
+    end
     else begin
-      ms <= ms + 1;
+      ds <= ds + 1;
     end
   end
-end
-
-// Button logic
-always @(posedge mclk) begin
-  if (BTN0) begin
-    ms <= 0;
-    cs <= 0;
-    ds <= 0;
-    ss <= 0;
+  else begin
+      cs <= cs + 1;
+    end
   end
-  if (BTN1) begin
-    timer_running <= ~timer_running;
+    else begin
+    ms <= ms + 1;
   end
 end
 
-// Encode and display logic (same as before)
 wire [7:0] seg_ms, seg_cs, seg_ds, seg_ss;
-hexEncode d0(ms, 1'b0, seg_ms);
-hexEncode d1(cs, 1'b0, seg_cs);
-hexEncode d2(ds, 1'b0, seg_ds);
-hexEncode d3(ss, 1'b1, seg_ss);
+hexEncode d0(ms, 1'b0, seg_ms); // No decimal point for ms
+hexEncode d1(cs, 1'b0, seg_cs); // No decimal point for cs
+hexEncode d2(ds, 1'b0, seg_ds); // No decimal point for ss
+hexEncode d3(ss, 1'b1, seg_ss); // Decimal point for ds
 
+// Multiplex the displays
 reg [2:0] display_sel;
 
 always @(posedge clk_10kHz) begin
 display_sel <= display_sel + 1;
 end
 
+// Swap the position of the digits in the display
 assign D1_seg = (display_sel == 3'b000) ? seg_ss : (display_sel == 3'b001) ? seg_ds : (display_sel == 3'b010) ? seg_cs : (display_sel == 3'b011) ? seg_ms : 8'b11111111;
 assign D1_a = (display_sel == 3'b000) ? 4'b0111 : (display_sel == 3'b001) ? 4'b1011 : (display_sel == 3'b010) ? 4'b1101 : (display_sel == 3'b011) ? 4'b1110 : 4'b1111;
 
