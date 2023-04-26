@@ -69,6 +69,7 @@ endmodule
 
 module top(
   input mclk,
+  input [3:0] btn,
   output [7:0] D1_seg,
   output [3:0] D1_a
 );
@@ -84,32 +85,54 @@ clock_divider clk_div(
 
 // Millisecond timer logic
 reg [3:0] ms, cs, ds, ss;
+reg timer_start_stop;
+reg btn0_prev, btn1_prev;
 
 always @(posedge clk_1kHz) begin
-if (ms == 4'b1001) begin
-  ms <= 0;
-  if (cs == 4'b1001) begin
+  // Detect rising edge of btn[0] for reset
+  if (!btn0_prev && btn[0]) begin
+    ms <= 0;
     cs <= 0;
-    if (ds == 4'b1001) begin
-      ds <= 0;
-      if (ss == 4'b1001) begin
-        ss <= 0;
+    ds <= 0;
+    ss <= 0;
+  end
+
+  // Detect rising edge of btn[1] for start/stop
+  if (!btn1_prev && btn[1]) begin
+    timer_start_stop <= ~timer_start_stop;
+  end
+
+  // Timer logic when running
+  if (timer_start_stop) begin
+    if (ms == 4'b1001) begin
+      ms <= 0;
+      if (cs == 4'b1001) begin
+        cs <= 0;
+        if (ds == 4'b1001) begin
+          ds <= 0;
+          if (ss == 4'b1001) begin
+            ss <= 0;
+          end
+          else begin
+            ss <= ss + 1;
+          end
+        end
+        else begin
+          ds <= ds + 1;
+        end
       end
       else begin
-        ss <= ss + 1;
+          cs <= cs + 1;
+        end
+      end
+      else begin
+        ms <= ms + 1;
       end
     end
-    else begin
-      ds <= ds + 1;
-    end
-  end
-  else begin
-      cs <= cs + 1;
-    end
-  end
-    else begin
-    ms <= ms + 1;
-  end
+
+  // Update button previous states
+  btn0_prev <= btn[0];
+  btn1_prev <= btn[1];
 end
 
 wire [7:0] seg_ms, seg_cs, seg_ds, seg_ss;
