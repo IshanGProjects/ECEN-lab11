@@ -69,7 +69,7 @@ endmodule
 
 module top(
   input mclk,
-  input [3:0] btn, // Change button input syntax
+  input [3:0] btn,
   output [7:0] D1_seg,
   output [3:0] D1_a
 );
@@ -86,24 +86,27 @@ clock_divider clk_div(
 // Millisecond timer logic
 reg [3:0] ms, cs, ds, ss;
 reg timer_reset, timer_start_stop;
+reg reset_done; // Add new signal reset_done
 
 // btn[0] - Reset
-always @(posedge btn[0]) begin // Change BTN0 to btn[0]
+always @(posedge btn[0]) begin
   timer_reset <= 1'b1;
+  reset_done <= 1'b0; // Clear reset_done when btn[0] is pressed
 end
 
 // btn[1] - Start/Stop
-always @(posedge btn[1]) begin // Change BTN1 to btn[1]
+always @(posedge btn[1]) begin
   timer_start_stop <= ~timer_start_stop;
 end
 
 always @(posedge clk_1kHz) begin
-  if (timer_reset) begin
+  if (timer_reset && !reset_done) begin // Check if reset_done is false
     ms <= 0;
     cs <= 0;
     ds <= 0;
     ss <= 0;
     timer_reset <= 1'b0;
+    reset_done <= 1'b1; // Set reset_done after resetting the timer
   end
   else if (timer_start_stop) begin
     if (ms == 4'b1001) begin
